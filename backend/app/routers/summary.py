@@ -3,23 +3,20 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user
-from app.models import Job, JobType, Shift, User
+from app.models import JobType, User
 from app.rules.engine import (
     LIMITED_JOB_TYPES,
-    WorkPeriod,
     limited_segments,
     minutes_between,
     peak_rolling_window,
-    week_start_for,
     weekly_totals,
 )
 from app.rules.ruleset import CURRENT, ruleset_for
-from app.schemas import as_utc
+from app.services.hours import load_shifts, to_period, week_bounds
 
 router = APIRouter(tags=["summary"])
 
@@ -83,22 +80,6 @@ class SummaryOut(BaseModel):
     recent_weeks: list[RecentWeekOut]
 
 
-# ---------- Helpers ----------
-def to_period(shift: Shift) -> WorkPeriod:
-    return WorkPeriod(as_utc(shift.starts_at), as_utc(shift.ends_at), shift.counted_minutes, shift.job.job_type)
-
-
-def load_shifts(db: Session, user: User, start: datetime, end: datetime) -> list[Shift]:
-    # A shift can be at most 24 h long, so look back one extra day to catch overnight shifts.
-    query = (
-        select(Shift)
-        .join(Job)
-        .where(Job.user_id == user.id, Shift.starts_at >= start - timedelta(days=1), Shift.starts_at < end)
-        .order_by(Shift.starts_at)
-    )
-    return list(db.scalars(query))
-
-
 # ---------- Endpoints ----------
 @router.get("/rules", response_model=RulesOut)
 def rules() -> RulesOut:
@@ -131,7 +112,7 @@ def summary(
     if ruleset is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Weeks before Nov 8, 2024 aren't supported yet")
 
-    week_start = week_start_for(day, 0)
+    week_start, week_lo, week_hi = week_bounds(day, tz)
     week_end = week_start + timedelta(days=6)
     first_week = week_start - timedelta(weeks=weeks_back - 1)
     window_lo = datetime.combine(first_week - timedelta(days=7), datetime.min.time(), tzinfo=tz)
@@ -145,8 +126,6 @@ def summary(
     this_week = weeks[-1]
 
     # Rolling peak among 7-day windows that overlap the selected week.
-    week_lo = datetime.combine(week_start, datetime.min.time(), tzinfo=tz)
-    week_hi = week_lo + timedelta(days=7)
     nearby = [s for s in segments if s.end > week_lo - timedelta(days=7) and s.start < week_hi + timedelta(days=7)]
     peak = peak_rolling_window(nearby, ruleset)
     if peak and (peak.window_end <= week_lo or peak.window_start >= week_hi):
