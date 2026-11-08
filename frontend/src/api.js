@@ -26,13 +26,32 @@ export class ApiError extends Error {
   }
 }
 
-// FastAPI returns errors as {detail: "..."} or {detail: [{msg: "..."}]} for validation.
+const FIELD_NAMES = {
+  email: "Email",
+  password: "Password",
+  full_name: "Name",
+  name: "Name",
+  starts_at: "Start time",
+  ends_at: "End time",
+  earning_minutes: "Earning time",
+};
+
+// Turn one FastAPI/Pydantic validation error into a plain sentence.
+function validationMessage({ loc = [], msg = "" }) {
+  const field = FIELD_NAMES[loc[loc.length - 1]];
+  const text = msg.replace(/^Value error, /, "");
+  const minLength = text.match(/at least (\d+) characters?/);
+  if (field && minLength) return `${field} must be at least ${minLength[1]} characters.`;
+  if (field && /valid email/i.test(text)) return "Enter a valid email address.";
+  if (field && /field required/i.test(text)) return `${field} is required.`;
+  return text.endsWith(".") ? text : `${text}.`;
+}
+
+// FastAPI returns errors as {detail: "..."} or {detail: [{loc, msg}]} for validation.
 function errorMessage(body, status) {
   const detail = body?.detail;
   if (typeof detail === "string") return detail;
-  if (Array.isArray(detail) && detail.length) {
-    return detail.map((d) => d.msg?.replace(/^Value error, /, "")).join(". ");
-  }
+  if (Array.isArray(detail) && detail.length) return detail.map(validationMessage).join(" ");
   return status >= 500 ? "Something went wrong on the server. Try again in a minute." : "That request didn't work.";
 }
 

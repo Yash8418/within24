@@ -40,3 +40,149 @@ a {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
+
+/* ---------- Shared pieces ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.75rem;
+}
+
+.button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  font: 600 0.95rem/1 var(--font);
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--navy);
+  background: transparent;
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.button--primary {
+  background: var(--navy);
+  color: #fff;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+input,
+select {
+  font: 500 1rem var(--font);
+  padding: 0.7rem 0.8rem;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+}
+
+input:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.18);
+}
+
+.hint,
+.optional {
+  font-weight: 500;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.form-error {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  background: #fdecea;
+  color: var(--over);
+  font-size: 0.9rem;
+}
+
+.loading,
+.page {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+.wordmark {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  color: var(--navy);
+}
+
+.wordmark span {
+  font-family: var(--mono);
+  background: var(--gold);
+  color: var(--navy);
+  border-radius: 6px;
+  padding: 0 0.3rem;
+  margin-left: 0.1rem;
+}
+
+/* ---------- Sign in / sign up ---------- */
+.auth {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 26rem);
+  gap: clamp(2rem, 6vw, 5rem);
+  align-items: center;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+.auth__intro h1 {
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 1.5rem 0 1rem;
+  color: var(--navy);
+}
+
+.auth__intro p:last-child {
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  max-width: 32rem;
+}
+
+.auth__form {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.auth__form h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.auth__switch {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .auth {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+}
