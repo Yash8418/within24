@@ -1,0 +1,42 @@
+:root {
+  --navy: #163a5f;
+  --navy-soft: #3d5a78;
+  --ink: #14202b;
+  --ink-soft: #55636f;
+  --paper: #fbfaf7;
+  --card: #ffffff;
+  --line: #e2e0d9;
+  --gold: #f7c948;
+  --ok: #1f7a4d;
+  --warn: #a15c00;
+  --over: #b42318;
+  --focus: #2563eb;
+
+  --font: "Manrope", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--navy);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
