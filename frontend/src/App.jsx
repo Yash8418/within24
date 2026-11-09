@@ -3,6 +3,7 @@ import { AuthProvider, RequireAuth } from "./auth.jsx";
 import Layout from "./components/Layout.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import JobsPage from "./pages/JobsPage.jsx";
+import ShiftsPage from "./pages/ShiftsPage.jsx";
 
 function ThisWeek() {
   return <h1>This week</h1>;
@@ -22,6 +23,7 @@ export default function App() {
           }
         >
           <Route path="/" element={<ThisWeek />} />
+          <Route path="/shifts" element={<ShiftsPage />} />
           <Route path="/jobs" element={<JobsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
