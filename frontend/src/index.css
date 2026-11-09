@@ -186,3 +186,183 @@ select:focus-visible {
     min-height: auto;
   }
 }
+
+/* ---------- App shell ---------- */
+.topbar {
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar__inner {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0.9rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.topbar .wordmark {
+  text-decoration: none;
+}
+
+.topbar nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.topbar nav a {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: 0.3rem 0;
+  border-bottom: 2px solid transparent;
+}
+
+.topbar nav a.active {
+  color: var(--navy);
+  border-bottom-color: var(--gold);
+}
+
+.topbar__user {
+  margin-left: auto;
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.topbar__email {
+  color: var(--ink-soft);
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: 600 0.9rem var(--font);
+  color: var(--navy);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-button--danger {
+  color: var(--over);
+}
+
+.page h1 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+  color: var(--navy);
+}
+
+.page h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.75rem;
+}
+
+.page-intro,
+.muted {
+  color: var(--ink-soft);
+}
+
+.footnote {
+  max-width: 64rem;
+  margin: 2rem auto 0;
+  padding: 1.25rem 1.25rem 2.5rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.two-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+  gap: 2rem;
+  align-items: start;
+  margin-top: 1.5rem;
+}
+
+.stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.tag {
+  display: inline-block;
+  margin: 0.3rem 0.4rem 0 0;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: #e8eef5;
+  color: var(--navy);
+}
+
+.tag--on_campus {
+  background: #e3f3ea;
+  color: var(--ok);
+}
+
+.tag--gig {
+  background: #fdf3d7;
+  color: var(--warn);
+}
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.week-nav h2 {
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.week-nav .button {
+  padding: 0.5rem 0.8rem;
+}
+
+@media (max-width: 760px) {
+  .two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar__inner {
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+  }
+
+  .topbar__email {
+    display: none;
+  }
+}
+
+strong + .tag {
+  margin-left: 0.5rem;
+}

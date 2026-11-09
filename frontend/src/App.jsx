@@ -1,17 +1,11 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AuthProvider, RequireAuth, useAuth } from "./auth.jsx";
+import { AuthProvider, RequireAuth } from "./auth.jsx";
+import Layout from "./components/Layout.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
+import JobsPage from "./pages/JobsPage.jsx";
 
-function Home() {
-  const { user, signOut } = useAuth();
-  return (
-    <main className="page">
-      <p>Signed in as {user.email}.</p>
-      <button className="button" type="button" onClick={signOut}>
-        Sign out
-      </button>
-    </main>
-  );
+function ThisWeek() {
+  return <h1>This week</h1>;
 }
 
 export default function App() {
@@ -21,13 +15,15 @@ export default function App() {
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/register" element={<AuthPage mode="register" />} />
         <Route
-          path="/"
           element={
             <RequireAuth>
-              <Home />
+              <Layout />
             </RequireAuth>
           }
-        />
+        >
+          <Route path="/" element={<ThisWeek />} />
+          <Route path="/jobs" element={<JobsPage />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
