@@ -16,6 +16,7 @@ export default function Layout() {
             </NavLink>
             <NavLink to="/shifts">Shifts</NavLink>
             <NavLink to="/jobs">Jobs</NavLink>
+            <NavLink to="/breaks">Breaks</NavLink>
           </nav>
           <div className="topbar__user">
             <span className="topbar__email">{user.full_name || user.email}</span>

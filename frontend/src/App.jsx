@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, RequireAuth } from "./auth.jsx";
 import Layout from "./components/Layout.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
+import BreaksPage from "./pages/BreaksPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import JobsPage from "./pages/JobsPage.jsx";
 import ShiftsPage from "./pages/ShiftsPage.jsx";
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/shifts" element={<ShiftsPage />} />
           <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/breaks" element={<BreaksPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -95,6 +95,10 @@ export const api = {
   updateShift: (id, shift) => request(`/shifts/${id}`, { method: "PUT", body: shift }),
   deleteShift: (id) => request(`/shifts/${id}`, { method: "DELETE" }),
 
+  listBreaks: () => request("/breaks"),
+  createBreak: (schoolBreak) => request("/breaks", { method: "POST", body: schoolBreak }),
+  deleteBreak: (id) => request(`/breaks/${id}`, { method: "DELETE" }),
+
   summary: (date, weeksBack) => request("/summary", { params: { date, weeks_back: weeksBack } }),
   checkShift: (shift) => request("/check-shift", { method: "POST", body: shift }),
   rules: () => request("/rules"),
