@@ -85,7 +85,7 @@ def test_hours_during_a_scheduled_break_do_not_count(client, auth_headers):
     body = client.get("/summary", params={"date": "2026-12-30"}, headers=auth_headers).json()
     assert body["week"]["minutes"] == 0 and body["week"]["status"] == "ok"
     assert [b["name"] for b in body["breaks"]] == ["Winter break"]
-    assert body["by_job"] == []
+    assert [(j["minutes"], j["minutes_in_break"]) for j in body["by_job"]] == [(0, 2400)]
 
     # The rolling window that includes Jan 4 only counts the 10 hours after the break.
     after = client.get("/summary", params={"date": "2027-01-04"}, headers=auth_headers).json()

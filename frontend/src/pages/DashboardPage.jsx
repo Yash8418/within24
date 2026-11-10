@@ -109,6 +109,12 @@ export default function DashboardPage() {
         <div className="dashboard">
           <section className="card dashboard__main" aria-label="Hours this week">
             <WeekMeter week={summary.week} />
+            {summary.breaks.map((b) => (
+              <p key={b.id} className="callout callout--break">
+                <strong>{b.name}</strong> runs {dayFmt.format(parseDate(b.start_date))} –{" "}
+                {dayFmt.format(parseDate(b.end_date))}. Off-campus hours on those days don't count toward the limit.
+              </p>
+            ))}
             {peakWarning && (
               <p className={`callout callout--${peak.status}`}>
                 Between {dayFmt.format(new Date(peak.window_start))} and {dayFmt.format(new Date(peak.window_end))} you
@@ -133,6 +139,9 @@ export default function DashboardPage() {
                     <span>
                       <strong>{hours(job.minutes)} h</strong>
                       {!job.counts_toward_limit && <span className="muted"> · not counted</span>}
+                      {job.minutes_in_break > 0 && (
+                        <span className="muted"> + {hours(job.minutes_in_break)} h during break, not counted</span>
+                      )}
                     </span>
                   </li>
                 ))}
@@ -141,7 +150,7 @@ export default function DashboardPage() {
 
             <h2>Last 8 weeks</h2>
             <RecentWeeks weeks={summary.recent_weeks} limit={summary.week.limit_minutes} />
-            <p className="hint">Off-campus hours per calendar week. The dashed line is the {hours(summary.week.limit_minutes)}-hour limit.</p>
+            <p className="hint">Off-campus hours per calendar week. The dashed line is the {hours(summary.week.limit_minutes)}-hour limit. Days in a scheduled break aren't counted.</p>
           </section>
 
           <CheckShift jobs={jobs} onSaved={() => setRefresh((n) => n + 1)} />

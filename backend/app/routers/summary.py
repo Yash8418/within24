@@ -63,7 +63,8 @@ class JobMinutesOut(BaseModel):
     job_id: int
     name: str
     job_type: JobType
-    minutes: float
+    minutes: float  # minutes that count (for on-campus jobs: minutes worked)
+    minutes_in_break: float  # off-campus minutes worked during a scheduled break, not counted
     counts_toward_limit: bool
 
 
@@ -137,13 +138,14 @@ def summary(
     by_job: dict[int, JobMinutesOut] = {}
     for shift in shifts:
         period = to_period(shift)
+        share = (min(period.end, week_hi) - max(period.start, week_lo)) / (period.end - period.start)
+        worked = period.counted_minutes * max(share, 0)
+        if worked <= 0:
+            continue
         if period.job_type in LIMITED_JOB_TYPES:
             minutes = minutes_between(limited_segments([period], breaks, tz), week_lo, week_hi)
         else:
-            share = (min(period.end, week_hi) - max(period.start, week_lo)) / (period.end - period.start)
-            minutes = period.counted_minutes * max(share, 0)
-        if minutes <= 0:
-            continue
+            minutes = worked
         entry = by_job.setdefault(
             shift.job_id,
             JobMinutesOut(
@@ -151,10 +153,13 @@ def summary(
                 name=shift.job.name,
                 job_type=shift.job.job_type,
                 minutes=0,
+                minutes_in_break=0,
                 counts_toward_limit=shift.job.job_type in LIMITED_JOB_TYPES,
             ),
         )
         entry.minutes = round(entry.minutes + minutes, 1)
+        if period.job_type in LIMITED_JOB_TYPES:
+            entry.minutes_in_break = round(entry.minutes_in_break + worked - minutes, 1)
 
     return SummaryOut(
         rules_version=ruleset.version,
@@ -167,7 +172,7 @@ def summary(
             status=this_week.status,
         ),
         rolling_peak=RollingOut(**peak.__dict__) if peak else None,
-        by_job=sorted(by_job.values(), key=lambda j: -j.minutes),
+        by_job=sorted(by_job.values(), key=lambda j: -(j.minutes + j.minutes_in_break)),
         recent_weeks=[RecentWeekOut(week_start=w.week_start, minutes=w.minutes, status=w.status) for w in weeks],
         breaks=[b for b in school_breaks if b.start_date <= week_end and b.end_date >= week_start],
     )

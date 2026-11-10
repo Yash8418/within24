@@ -455,6 +455,10 @@ strong + .tag {
   background: #fdecea;
 }
 
+.callout--break {
+  background: #e7f0f8;
+}
+
 .recent {
   list-style: none;
   padding: 0;
