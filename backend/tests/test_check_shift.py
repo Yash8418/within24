@@ -97,3 +97,16 @@ def test_cannot_check_against_someone_elses_job(client, auth_headers):
     other = register(client, email="other@example.com")
     body = {"job_id": job, "starts_at": "2026-11-04T09:00:00-05:00", "ends_at": "2026-11-04T17:00:00-05:00"}
     assert client.post("/check-shift", json=body, headers=other).status_code == 404
+
+
+def test_shift_during_a_break_is_allowed_and_not_counted(client, auth_headers):
+    job = client.post("/jobs", json={"name": "Cashier", "job_type": "off_campus"}, headers=auth_headers).json()["id"]
+    client.post("/breaks", json={"name": "Summer", "start_date": "2027-05-01", "end_date": "2027-08-31"},
+                headers=auth_headers)
+    shift = {"job_id": job, "starts_at": "2027-06-01T08:00:00-04:00", "ends_at": "2027-06-01T20:00:00-04:00"}
+    for _ in range(3):  # 36 h already that week
+        client.post("/shifts", json=shift, headers=auth_headers)
+    body = client.post("/check-shift", json=shift, headers=auth_headers).json()
+    assert body["allowed"] is True
+    assert body["counted_minutes"] == 0
+    assert "scheduled break" in body["message"]

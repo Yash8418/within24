@@ -16,7 +16,8 @@ from app.rules.engine import (
     weekly_totals,
 )
 from app.rules.ruleset import CURRENT, ruleset_for
-from app.services.hours import load_shifts, to_period, week_bounds
+from app.schemas import BreakOut
+from app.services.hours import load_breaks, load_shifts, to_break, to_period, week_bounds
 
 router = APIRouter(tags=["summary"])
 
@@ -78,6 +79,7 @@ class SummaryOut(BaseModel):
     rolling_peak: RollingOut | None
     by_job: list[JobMinutesOut]
     recent_weeks: list[RecentWeekOut]
+    breaks: list[BreakOut]  # scheduled breaks overlapping the selected week
 
 
 # ---------- Endpoints ----------
@@ -119,7 +121,8 @@ def summary(
     window_hi = datetime.combine(week_end + timedelta(days=8), datetime.min.time(), tzinfo=tz)
 
     shifts = load_shifts(db, user, window_lo, window_hi)
-    breaks: list = []  # scheduled breaks are added in a later step
+    school_breaks = load_breaks(db, user, window_lo.date(), window_hi.date())
+    breaks = [to_break(b) for b in school_breaks]
     segments = limited_segments([to_period(s) for s in shifts], breaks, tz)
 
     weeks = weekly_totals(segments, tz, ruleset, first_week, week_end)
@@ -166,4 +169,5 @@ def summary(
         rolling_peak=RollingOut(**peak.__dict__) if peak else None,
         by_job=sorted(by_job.values(), key=lambda j: -j.minutes),
         recent_weeks=[RecentWeekOut(week_start=w.week_start, minutes=w.minutes, status=w.status) for w in weeks],
+        breaks=[b for b in school_breaks if b.start_date <= week_end and b.end_date >= week_start],
     )

@@ -67,3 +67,36 @@ def test_summary_is_private_and_requires_login(client, auth_headers):
 
 def test_summary_rejects_dates_before_supported_rules(client, auth_headers):
     assert client.get("/summary", params={"date": "2024-01-15"}, headers=auth_headers).status_code == 422
+
+
+def add_break(client, headers, start, end, name="Winter break"):
+    response = client.post("/breaks", json={"name": name, "start_date": start, "end_date": end}, headers=headers)
+    assert response.status_code == 201, response.text
+
+
+def test_hours_during_a_scheduled_break_do_not_count(client, auth_headers):
+    job = add_job(client, auth_headers)
+    # Winter break ends Sunday Jan 3; classes resume Monday Jan 4.
+    add_break(client, auth_headers, "2026-12-19", "2027-01-03")
+    for day in ("2026-12-28", "2026-12-29", "2026-12-30", "2026-12-31"):  # 4 x 10 h, all during the break
+        add_shift(client, auth_headers, job, f"{day}T08:00:00-05:00", f"{day}T18:00:00-05:00")
+    add_shift(client, auth_headers, job, "2027-01-04T08:00:00-05:00", "2027-01-04T18:00:00-05:00")  # after it
+
+    body = client.get("/summary", params={"date": "2026-12-30"}, headers=auth_headers).json()
+    assert body["week"]["minutes"] == 0 and body["week"]["status"] == "ok"
+    assert [b["name"] for b in body["breaks"]] == ["Winter break"]
+    assert body["by_job"] == []
+
+    # The rolling window that includes Jan 4 only counts the 10 hours after the break.
+    after = client.get("/summary", params={"date": "2027-01-04"}, headers=auth_headers).json()
+    assert after["week"]["minutes"] == 600
+    assert after["rolling_peak"]["minutes"] == 600
+    assert after["breaks"] == []
+
+
+def test_shift_crossing_the_end_of_a_break_is_partly_counted(client, auth_headers):
+    job = add_job(client, auth_headers)
+    add_break(client, auth_headers, "2027-02-15", "2027-02-21", "Reading week")
+    add_shift(client, auth_headers, job, "2027-02-21T20:00:00-05:00", "2027-02-22T04:00:00-05:00")  # 4 h before midnight
+    body = client.get("/summary", params={"date": "2027-02-22"}, headers=auth_headers).json()
+    assert body["week"]["minutes"] == 240

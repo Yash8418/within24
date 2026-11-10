@@ -20,7 +20,7 @@ from app.rules.engine import (
 )
 from app.rules.ruleset import ruleset_for
 from app.schemas import ShiftCreate
-from app.services.hours import load_shifts, to_period, week_bounds
+from app.services.hours import load_breaks, load_shifts, to_break, to_period, week_bounds
 
 router = APIRouter(tags=["summary"])
 
@@ -73,7 +73,8 @@ def check_shift(body: CheckShiftIn, user: User = Depends(get_current_user), db: 
     proposed = WorkPeriod(
         body.starts_at, body.ends_at, body.earning_minutes if body.earning_minutes is not None else length, job.job_type
     )
-    breaks: list = []  # scheduled breaks are added in a later step
+    lo_day, hi_day = (body.starts_at - WINDOW).astimezone(tz).date(), (body.ends_at + WINDOW).astimezone(tz).date()
+    breaks = [to_break(b) for b in load_breaks(db, user, lo_day, hi_day)]
     existing = [to_period(s) for s in load_shifts(db, user, body.starts_at - WINDOW, body.ends_at + WINDOW,
                                                   exclude_id=body.replaces_shift_id)]
     before = limited_segments(existing, breaks, tz)
@@ -110,7 +111,7 @@ def check_shift(body: CheckShiftIn, user: User = Depends(get_current_user), db: 
     week = weeks[0]
     if not counts:
         message = "On-campus work doesn't count toward the 24-hour off-campus limit."
-    elif counted == 0:
+    elif counted == 0 and proposed.counted_minutes > 0:
         message = "This shift falls in a scheduled break, so it doesn't count toward the weekly limit."
     elif not allowed:
         worst = max([w.minutes_after for w in weeks] + [peak_minutes])
