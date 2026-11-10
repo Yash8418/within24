@@ -108,3 +108,17 @@ def test_deleting_a_job_deletes_its_shifts(client, auth_headers):
     create_shift(client, auth_headers, job_id)
     client.delete(f"/jobs/{job_id}", headers=auth_headers)
     assert client.get("/shifts", headers=auth_headers).json() == []
+
+
+def test_offsets_are_kept_when_saving_and_filtering(client, auth_headers):
+    job_id = client.post("/jobs", json={"name": "Cashier", "job_type": "off_campus"}, headers=auth_headers).json()["id"]
+    # 9 pm Sunday in Toronto is already Monday in UTC.
+    created = create_shift(
+        client, auth_headers, job_id, starts_at="2026-11-08T21:00:00-05:00", ends_at="2026-11-08T23:00:00-05:00"
+    )
+    assert created.json()["starts_at"] == "2026-11-09T02:00:00Z"
+
+    sunday = {"start": "2026-11-08T00:00:00-05:00", "end": "2026-11-09T00:00:00-05:00"}
+    listed = client.get("/shifts", params=sunday, headers=auth_headers).json()
+    assert [s["id"] for s in listed] == [created.json()["id"]]
+    assert listed[0]["starts_at"] == "2026-11-09T02:00:00Z"  # read back from the database

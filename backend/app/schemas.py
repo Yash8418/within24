@@ -10,6 +10,11 @@ def as_utc(value: datetime) -> datetime:
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
 
 
+def to_utc(value: datetime) -> datetime:
+    """Convert an instant to UTC before comparing it with stored datetimes (naive values are taken as UTC)."""
+    return as_utc(value).astimezone(timezone.utc)
+
+
 # ---------- Auth ----------
 class UserCreate(BaseModel):
     email: EmailStr
@@ -74,7 +79,9 @@ class ShiftBase(BaseModel):
     def require_timezone(cls, value: datetime) -> datetime:
         if value.tzinfo is None:
             raise ValueError("datetime must include a timezone offset, e.g. 2026-11-05T09:00:00-05:00")
-        return value
+        # Store every instant in UTC. SQLite keeps only the wall-clock part of a datetime,
+        # so an offset like -05:00 would otherwise be lost on save.
+        return to_utc(value)
 
     @model_validator(mode="after")
     def check_times(self):

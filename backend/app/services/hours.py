@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Job, Shift, User
 from app.rules.engine import WorkPeriod, week_start_for
-from app.schemas import as_utc
+from app.schemas import as_utc, to_utc
 
 # A single shift is at most 24 hours long (enforced by the API).
 MAX_SHIFT = timedelta(days=1)
@@ -25,7 +25,7 @@ def load_shifts(db: Session, user: User, start: datetime, end: datetime, exclude
     query = (
         select(Shift)
         .join(Job)
-        .where(Job.user_id == user.id, Shift.starts_at >= start - MAX_SHIFT, Shift.starts_at < end)
+        .where(Job.user_id == user.id, Shift.starts_at >= to_utc(start - MAX_SHIFT), Shift.starts_at < to_utc(end))
         .order_by(Shift.starts_at)
     )
     if exclude_id is not None:

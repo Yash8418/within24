@@ -8,7 +8,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.models import Job, Shift, User
 from app.routers.jobs import get_owned_job
-from app.schemas import ShiftCreate, ShiftOut, ShiftUpdate
+from app.schemas import ShiftCreate, ShiftOut, ShiftUpdate, to_utc
 
 router = APIRouter(prefix="/shifts", tags=["shifts"])
 
@@ -30,9 +30,9 @@ def list_shifts(
 ) -> list[Shift]:
     query = select(Shift).join(Job).where(Job.user_id == user.id)
     if start is not None:
-        query = query.where(Shift.starts_at >= start)
+        query = query.where(Shift.starts_at >= to_utc(start))
     if end is not None:
-        query = query.where(Shift.starts_at < end)
+        query = query.where(Shift.starts_at < to_utc(end))
     if job_id is not None:
         query = query.where(Shift.job_id == job_id)
     return list(db.scalars(query.order_by(Shift.starts_at)))
