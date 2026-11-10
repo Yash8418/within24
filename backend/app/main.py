@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import CORS_ORIGINS
 from app.database import Base, engine
-from app.routers import auth, check, jobs, shifts, summary
+from app.routers import auth, breaks, check, jobs, shifts, summary
 
 
 @asynccontextmanager
@@ -34,6 +34,7 @@ app.include_router(jobs.router)
 app.include_router(shifts.router)
 app.include_router(summary.router)
 app.include_router(check.router)
+app.include_router(breaks.router)
 
 
 @app.get("/health", tags=["meta"])

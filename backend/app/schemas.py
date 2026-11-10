@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
@@ -112,3 +112,27 @@ class ShiftOut(BaseModel):
     @classmethod
     def ensure_utc(cls, value: datetime) -> datetime:
         return as_utc(value)
+
+
+class BreakBase(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    start_date: date
+    end_date: date
+
+    @model_validator(mode="after")
+    def check_dates(self):
+        if self.end_date < self.start_date:
+            raise ValueError("The break must end on or after its start date")
+        if (self.end_date - self.start_date).days > 183:
+            raise ValueError("A break can be at most 6 months long")
+        return self
+
+
+class BreakCreate(BreakBase):
+    pass
+
+
+class BreakOut(BreakBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int

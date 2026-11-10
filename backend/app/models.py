@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import enum
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import CheckConstraint, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -37,6 +37,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     jobs: Mapped[list[Job]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    breaks: Mapped[list[SchoolBreak]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
 class Job(Base):
@@ -82,3 +83,23 @@ class Shift(Base):
         if self.earning_minutes is not None:
             return self.earning_minutes
         return int((self.ends_at - self.starts_at).total_seconds() // 60)
+
+
+class SchoolBreak(Base):
+    """A break in the academic calendar set by the student's school (e.g. winter break, reading week).
+
+    Off-campus hours worked during a scheduled break don't count toward the weekly limit.
+    Both dates are inclusive and are interpreted in the user's timezone.
+    """
+
+    __tablename__ = "school_breaks"
+    __table_args__ = (CheckConstraint("end_date >= start_date", name="break_ends_on_or_after_start"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    user: Mapped[User] = relationship(back_populates="breaks")
