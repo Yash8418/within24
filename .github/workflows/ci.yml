@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Unit and API tests
+        run: pytest -q
+        env:
+          SECRET_KEY: ci-only-secret
+
+  docker:
+    # Builds the production image and runs it against a real PostgreSQL database.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t within24-api backend
+      - name: Start API
+        run: |
+          docker run -d --name api --network host \
+            -e DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres \
+            -e SECRET_KEY=ci-only-secret \
+            within24-api
+          for i in $(seq 1 30); do curl -fsS localhost:8000/health && break; sleep 1; done
+      - name: Smoke test against PostgreSQL
+        run: |
+          set -euo pipefail
+          api=http://localhost:8000
+          token=$(curl -fsS -X POST $api/auth/register -H 'Content-Type: application/json' \
+            -d '{"email":"ci@example.com","password":"correct-horse-1"}' | jq -r .access_token)
+          auth="Authorization: Bearer $token"
+          job=$(curl -fsS -X POST $api/jobs -H "$auth" -H 'Content-Type: application/json' \
+            -d '{"name":"Cashier","job_type":"off_campus"}' | jq -r .id)
+          curl -fsS -X POST $api/shifts -H "$auth" -H 'Content-Type: application/json' \
+            -d "{\"job_id\":$job,\"starts_at\":\"2026-11-09T21:00:00-05:00\",\"ends_at\":\"2026-11-10T01:00:00-05:00\"}" > /dev/null
+          curl -fsS "$api/summary?date=2026-11-09" -H "$auth" | jq -e '.week.minutes == 240'
+          curl -fsS "$api/reports/hours.pdf?start=2026-11-09&end=2026-11-15" -H "$auth" | head -c 5 | grep -q '%PDF-'
+      - name: API logs
+        if: always()
+        run: docker logs api
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
