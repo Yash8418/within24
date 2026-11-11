@@ -1,0 +1,24 @@
+# Render Blueprint for the Within24 API: New -> Blueprint in the Render dashboard, pick this repo.
+# The database is external (e.g. a free Neon PostgreSQL project) because Render's free
+# PostgreSQL databases are deleted after 30 days. Paste its connection string as DATABASE_URL.
+services:
+  - type: web
+    name: within24-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: ohio
+    healthCheckPath: /health
+    autoDeploy: true
+    buildFilter:
+      paths: ["backend/**"]
+    envVars:
+      - key: DATABASE_URL
+        sync: false # entered in the dashboard; never committed
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://yash8418.github.io
+      - key: ACCESS_TOKEN_MINUTES
+        value: "120"
