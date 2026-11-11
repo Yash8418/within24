@@ -37,7 +37,8 @@ cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 pytest -q
-uvicorn app.main:app --reload          # http://localhost:8000/docs
+cp .env.example .env                   # then fill in SECRET_KEY (optional for local use)
+uvicorn app.main:app --reload --env-file .env   # http://localhost:8000/docs
 
 # Frontend
 cd frontend
