@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user
-from app.models import Job, Shift, User
+from app.models import Job, Shift, ShiftSource, User
 from app.routers.jobs import get_owned_job
-from app.schemas import ShiftCreate, ShiftOut, ShiftUpdate, to_utc
+from app.schemas import ImportIn, ImportOut, ImportRowOut, RowErrorOut, ShiftCreate, ShiftOut, ShiftUpdate, to_utc
+from app.services.csv_import import parse_shifts_csv
 
 router = APIRouter(prefix="/shifts", tags=["shifts"])
 
@@ -45,6 +46,51 @@ def create_shift(body: ShiftCreate, user: User = Depends(get_current_user), db: 
     db.add(shift)
     db.commit()
     return shift
+
+
+@router.post("/import", response_model=ImportOut)
+def import_shifts(body: ImportIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> ImportOut:
+    """Import shifts from CSV text. Nothing is saved if any row has an error (or when dry_run is true)."""
+    job = get_owned_job(body.job_id, user, db)
+    parsed = parse_shifts_csv(body.csv, user.timezone)
+
+    existing = {
+        (to_utc(s.starts_at), to_utc(s.ends_at))
+        for s in db.scalars(select(Shift).where(Shift.job_id == job.id))
+    }
+    rows, seen = [], set()
+    for shift in parsed.shifts:
+        key = (shift.starts_at, shift.ends_at)
+        rows.append(
+            ImportRowOut(
+                line=shift.line,
+                starts_at=shift.starts_at,
+                ends_at=shift.ends_at,
+                earning_minutes=shift.earning_minutes,
+                notes=shift.notes,
+                duplicate=key in existing or key in seen,
+            )
+        )
+        seen.add(key)
+
+    errors = [RowErrorOut(line=line, message=message) for line, message in parsed.errors]
+    new_rows = [row for row in rows if not row.duplicate]
+    imported = 0
+    if not body.dry_run and not errors and new_rows:
+        for row in new_rows:
+            db.add(
+                Shift(
+                    job_id=job.id,
+                    starts_at=row.starts_at,
+                    ends_at=row.ends_at,
+                    earning_minutes=row.earning_minutes,
+                    notes=row.notes,
+                    source=ShiftSource.CSV_IMPORT,
+                )
+            )
+        db.commit()
+        imported = len(new_rows)
+    return ImportOut(rows=rows, errors=errors, imported=imported, dry_run=body.dry_run)
 
 
 @router.put("/{shift_id}", response_model=ShiftOut)

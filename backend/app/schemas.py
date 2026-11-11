@@ -143,3 +143,30 @@ class BreakOut(BreakBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+
+
+class ImportIn(BaseModel):
+    job_id: int
+    csv: str = Field(min_length=1, max_length=1_000_000)
+    dry_run: bool = True
+
+
+class ImportRowOut(BaseModel):
+    line: int
+    starts_at: datetime
+    ends_at: datetime
+    earning_minutes: int | None
+    notes: str | None
+    duplicate: bool  # already saved for this job (or repeated in the file); skipped on import
+
+
+class RowErrorOut(BaseModel):
+    line: int
+    message: str
+
+
+class ImportOut(BaseModel):
+    rows: list[ImportRowOut]
+    errors: list[RowErrorOut]
+    imported: int
+    dry_run: bool
