@@ -556,3 +556,71 @@ strong + .tag {
 .list__item > span > .tag {
   margin-left: 0.5rem;
 }
+
+/* ---------- CSV import ---------- */
+.small {
+  font-size: 0.875rem;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+code,
+pre {
+  font-family: var(--mono);
+  font-size: 0.85em;
+}
+
+pre {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  background: #f4f2ec;
+  border-radius: 8px;
+}
+
+.file-input input[type="file"] {
+  padding: 8px 0;
+  border: 0;
+}
+
+.import-preview {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.import-preview p {
+  margin: 0 0 8px;
+}
+
+.import-rows,
+.import-errors {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.import-rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.import-errors li {
+  padding: 2px 0;
+}
+
+.form-success {
+  margin: 0;
+  color: var(--ok);
+  font-weight: 600;
+}
+
+details.hint summary {
+  cursor: pointer;
+}

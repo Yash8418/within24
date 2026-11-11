@@ -55,13 +55,13 @@ function errorMessage(body, status) {
   return status >= 500 ? "Something went wrong on the server. Try again in a minute." : "That request didn't work.";
 }
 
-async function request(path, { method = "GET", body, params } = {}) {
+async function request(path, { method = "GET", body, params, raw = false } = {}) {
   const url = new URL(`${API_URL}${path}`);
   Object.entries(params ?? {}).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, value);
   });
 
-  const headers = { Accept: "application/json" };
+  const headers = { Accept: raw ? "*/*" : "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -74,6 +74,7 @@ async function request(path, { method = "GET", body, params } = {}) {
   }
 
   if (response.status === 204) return null;
+  if (raw && response.ok) return response;
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new ApiError(errorMessage(data, response.status), response.status);
   return data;
@@ -94,6 +95,14 @@ export const api = {
   createShift: (shift) => request("/shifts", { method: "POST", body: shift }),
   updateShift: (id, shift) => request(`/shifts/${id}`, { method: "PUT", body: shift }),
   deleteShift: (id) => request(`/shifts/${id}`, { method: "DELETE" }),
+
+  importShifts: (jobId, csv, dryRun) =>
+    request("/shifts/import", { method: "POST", body: { job_id: Number(jobId), csv, dry_run: dryRun } }),
+  async downloadHoursPdf(start, end) {
+    const response = await request("/reports/hours.pdf", { params: { start, end }, raw: true });
+    const name = /filename="([^"]+)"/.exec(response.headers.get("Content-Disposition") ?? "")?.[1];
+    return { blob: await response.blob(), filename: name ?? "within24-hours.pdf" };
+  },
 
   listBreaks: () => request("/breaks"),
   createBreak: (schoolBreak) => request("/breaks", { method: "POST", body: schoolBreak }),

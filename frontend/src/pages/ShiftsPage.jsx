@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import ImportShifts from "../components/ImportShifts.jsx";
 import { JOB_TYPES } from "./JobsPage.jsx";
 
 export function startOfWeek(date) {
@@ -38,6 +39,7 @@ export default function ShiftsPage() {
   const [form, setForm] = useState({ job_id: "", date: toDateInput(new Date()), start: "09:00", end: "17:00", earning: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     api
@@ -55,7 +57,7 @@ export default function ShiftsPage() {
       .listShifts({ start: weekStart.toISOString(), end: addDays(weekStart, 7).toISOString() })
       .then(setShifts)
       .catch((err) => setError(err.message));
-  }, [weekStart]);
+  }, [weekStart, reloadKey]);
 
   const jobById = Object.fromEntries(jobs.map((j) => [j.id, j]));
   const selectedJob = jobById[form.job_id];
@@ -142,49 +144,52 @@ export default function ShiftsPage() {
             </p>
           </div>
         ) : (
-          <form className="card stack" onSubmit={addShift}>
-            <h2>Log a shift</h2>
-            <label>
-              Job
-              <select value={form.job_id} onChange={update("job_id")}>
-                {jobs.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {job.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Date
-              <input type="date" value={form.date} onChange={update("date")} required />
-            </label>
-            <div className="row">
+          <div className="stack">
+            <form className="card stack" onSubmit={addShift}>
+              <h2>Log a shift</h2>
               <label>
-                Start
-                <input type="time" value={form.start} onChange={update("start")} required />
+                Job
+                <select value={form.job_id} onChange={update("job_id")}>
+                  {jobs.map((job) => (
+                    <option key={job.id} value={job.id}>
+                      {job.name}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label>
-                End
-                <input type="time" value={form.end} onChange={update("end")} required />
+                Date
+                <input type="date" value={form.date} onChange={update("date")} required />
               </label>
-            </div>
-            <span className="hint">An end time earlier than the start counts as an overnight shift.</span>
-            {selectedJob?.job_type === "gig" && (
-              <label>
-                Hours spent earning <span className="optional">(optional)</span>
-                <input type="number" min="0" step="0.25" value={form.earning} onChange={update("earning")} />
-                <span className="hint">For delivery apps, only time spent earning counts — not time logged in.</span>
-              </label>
-            )}
-            {error && (
-              <p className="form-error" role="alert">
-                {error}
-              </p>
-            )}
-            <button className="button button--primary" type="submit" disabled={busy}>
-              {busy ? "Saving…" : "Save shift"}
-            </button>
-          </form>
+              <div className="row">
+                <label>
+                  Start
+                  <input type="time" value={form.start} onChange={update("start")} required />
+                </label>
+                <label>
+                  End
+                  <input type="time" value={form.end} onChange={update("end")} required />
+                </label>
+              </div>
+              <span className="hint">An end time earlier than the start counts as an overnight shift.</span>
+              {selectedJob?.job_type === "gig" && (
+                <label>
+                  Hours spent earning <span className="optional">(optional)</span>
+                  <input type="number" min="0" step="0.25" value={form.earning} onChange={update("earning")} />
+                  <span className="hint">For delivery apps, only time spent earning counts — not time logged in.</span>
+                </label>
+              )}
+              {error && (
+                <p className="form-error" role="alert">
+                  {error}
+                </p>
+              )}
+              <button className="button button--primary" type="submit" disabled={busy}>
+                {busy ? "Saving…" : "Save shift"}
+              </button>
+            </form>
+            <ImportShifts jobs={jobs} onImported={() => setReloadKey((k) => k + 1)} />
+          </div>
         )}
       </div>
     </>
