@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import HoursRecord from "../components/HoursRecord.jsx";
 import ImportShifts from "../components/ImportShifts.jsx";
 import { JOB_TYPES } from "./JobsPage.jsx";
 
@@ -189,6 +190,7 @@ export default function ShiftsPage() {
               </button>
             </form>
             <ImportShifts jobs={jobs} onImported={() => setReloadKey((k) => k + 1)} />
+            <HoursRecord />
           </div>
         )}
       </div>
