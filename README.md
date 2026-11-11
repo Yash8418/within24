@@ -1,6 +1,10 @@
 # ⏱️ Within24
 
+[![CI](https://github.com/Yash8418/within24/actions/workflows/ci.yml/badge.svg)](https://github.com/Yash8418/within24/actions/workflows/ci.yml)
+
 **Work-hours tracker for international students in Canada.** Log shifts from every job — retail, restaurant, on-campus, delivery apps — and see at a glance whether you're within the 24-hour weekly off-campus limit on your study permit.
+
+![Weekly dashboard with hours left, hours by job and the last 8 weeks](docs/screenshots/dashboard.png)
 
 ## The problem
 
